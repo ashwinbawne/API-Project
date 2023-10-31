@@ -1,0 +1,409 @@
+﻿@model WebMVC.Models.Emp
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validate/1.19.3/jquery.validate.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validation-unobtrusive/3.2.12/jquery.validate.unobtrusive.min.js"></script>
+<script src="~/JavaScript.js"></script>
+
+
+
+@* <h1>Create</h1> *@
+
+<h4>Employee Registration</h4>
+<hr />
+
+@{
+    var HobbyList = ViewBag.Hobbies as List<string>;
+    var AvailableStates = ViewBag.States as List<SelectListItem>;
+}
+
+<div class="row">
+    <div class="col-md-4">
+
+
+
+
+
+        <form id="FormData" method="post" enctype="multipart/form-data">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+
+            <div class="form-group">
+                <label asp-for="Firstname" class="control-label">
+                    First Name<span class="text-danger">*</span>
+                </label>
+                <input asp-for="Firstname" class="form-control" id="Firstname" name="Firstname" />
+                <span asp-validation-for="Firstname" id="FirstnameError" class="text-danger"></span>
+            </div>
+
+
+            <br>
+            <div class="form-group">
+                <label asp-for="Lastname" class="control-label">
+                    Last Name<span class="text-danger">*</span>
+                </label>
+                <input asp-for="Lastname" class="form-control" id="Lastname" name="Lastname" />
+                <span asp-validation-for="Lastname" id="LastnameError" class="text-danger"></span>
+            </div>
+            <br>
+            <div class="form-group">
+                <label asp-for="Dateofbirth" class="control-label">
+                    Date of Birth<span class="text-danger">*</span>
+                </label>
+                <input type="date" asp-for="Dateofbirth" class="form-control" id="Dateofbirth" name="Dateofbirth" />
+                <span asp-validation-for="Dateofbirth" id="DateofbirthError" class="text-danger"></span>
+            </div>
+            <br>
+
+
+            <div>
+                <label asp-for="Hobbies" class="control-label">Hobbies <span asp-validation-for="Hobbies" class="text-danger" id="Hobbies" name="Hobbies">*</span></label>
+                <br>
+                @if (ViewBag.Hobbies != null)
+                {
+
+
+                    foreach (var hobby in ViewBag.Hobbies)
+                    {
+
+                        <input type="checkbox" name="Hobbie" value="@hobby"
+                               @(ViewBag.SelectedHobbies != null && ViewBag.SelectedHobbies.Contains(hobby) ? "unchecked" : "") />
+                        @hobby
+
+
+                    }
+                }
+
+
+
+            </div>
+            <br>
+
+            <br>
+
+            <div class="form-group">
+                <label asp-for="Gender" class="control-label" id="Gender">
+                    Gender <span class="text-danger">*</span>
+                </label>
+                <br>
+                <label>
+                    <input asp-for="Gender" type="radio" value="Male" name="Gender" id="Male" id="GenderError" id="Gender"> Male
+                </label>
+                <label>
+                    <input asp-for="Gender" type="radio" value="Female" name="Gender" id="Female" id="GenderError" id="Gender"> Female
+                </label>
+                <span asp-validation-for="Gender" class="text-danger" id="GenderError" id="Gender"></span>
+            </div>
+
+
+
+
+
+
+            <br>
+
+            <div>
+                <label class="control-label">State</label>&nbsp;&nbsp;&nbsp;&nbsp;
+                <select id="SelectedState" asp-for="StateID" asp-items="AvailableStates" name="State">
+                    <option value="">--select state--</option>
+                </select><br />
+                <span asp-validation-for="State" id="stateError" class="text-danger"></span>
+
+            </div>
+            <br>
+            <div>
+                <label class="control-label">City</label>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                <select id="cityDropdown" asp-for="CityID" style="width:140px" name="City">
+                    <option value="">--select city--</option>
+                </select><br />
+                <span asp-validation-for="City" id="cityError" class="text-danger"></span>
+
+                <input type="hidden" asp-for="CityID" />
+            </div>
+
+
+
+            <br>
+
+
+            <br>
+
+
+            <label asp-for="FormImageFile" class="control-label">Select a image:</label>
+            <input type="file" id="file" asp-for="FormImageFile" accept=".JPG, .PNG" id="UploadImage">
+            <img id="selectedImage" src="#" alt="Selected Image" style="max-width: 200px; display: none;">
+
+            <button id="clearImageButton" style="display: none;">Clear</button>
+
+
+
+            <br>
+
+
+            <label asp-for="FormPdfFile" class="control-label">Select a pdf:</label>
+            <input type="file" id="file" asp-for="FormPdfFile" accept=".pdf" id="UploadPdf">
+
+            <br>
+            <br>
+
+
+
+
+            @*<div class="form-group">
+                <label asp-for="SendEmail" class="control-label"></label>
+                <div>
+                    <input asp-for="SendEmail" class="form-check-input" id="SendEmailCheckbox" />
+                    <label class="form-check-label">Send Email</label>
+                    <span asp-validation-for="SendEmail" class="text-danger"></span>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="Email" class="control-label"></label>
+                <input asp-for="Email" id="Email" class="form-control" />
+                <span asp-validation-for="Email" id="Email-error" class="text-danger"></span>
+            </div>*@
+
+
+
+
+            <div class="form-group">
+
+                <button type="button" onclick="submitFromData()" class="btn btn-primary">Submit</button>
+
+
+
+                <button type="button" id="clearButton" class="btn btn-primary">Clear</button>
+
+
+
+            </div>
+
+
+
+
+
+        </form>
+    </div>
+</div>
+
+<div>
+    <a asp-action="Index">Back to List</a>
+</div>
+
+
+
+<script>
+
+
+    $(document).ready(function () {
+        $("#Dateofbirth").on("input", function () {
+            var selectedDate = new Date($(this).val());
+            var today = new Date();
+            var minDate = new Date();
+            minDate.setFullYear(today.getFullYear() - 100);
+
+            if (selectedDate > today) {
+                alert("Doesn't Exist");
+                $(this).val("");
+            } else if (selectedDate < minDate) {
+                alert(" Exist");
+                $(this).val("");
+            }
+
+        });
+    });
+
+</script>
+
+
+<script>
+
+    function validateForm() {
+
+        var isValid = true;
+
+        $(".text-danger").text("");
+
+
+        var firstname = $("#Firstname").val();
+        if (firstname.trim() === "") {
+            $("#FirstnameError").text("First Name is required");
+            isValid = false;
+        }
+
+        var lastname = $("#Lastname").val();
+        if (lastname.trim() === "") {
+            $("#LastnameError").text("Last Name is required");
+            isValid = false;
+        }
+
+
+        var dateofbirth = $("#Dateofbirth").val();
+        if (!dateofbirth || dateofbirth.trim() === "") {
+            $("#DateofbirthError").text("Date of birth is required");
+            isValid = false;
+        }
+
+        var gender = $("#Gender").val();
+        if (!dateofbirth || dateofbirth.trim() === "") {
+            $("#GenderError").text("Gender is required");
+            isValid = false;
+        }
+
+
+
+       // Validate Hobbies (assuming it's a list)
+        // var hobbies = $("#Hobbie").val();
+        // if (!hobbies || hobbies.length === 0) {
+        //     $("#HobbieError").text("Hobbies are required");
+        //     isValid = false;
+        // }
+        // var checkboxes = $("input[name^='Hobbies[']");
+        // console.log(checkboxes);
+        //  var isValid = true;
+
+        // checkboxes.each(function () {
+        //     if ($(this).is(":unchecked")) {
+        //         isValid = false;
+        //         return true;
+        //     }
+        // });
+
+        // if (!isValid) {
+        //     $("span[data-valmsg-for='Hobbie']").text("Select at least one hobby.");
+        // }
+
+
+
+
+        var state = $("#SelectedState").val();
+        if (state.trim() === "") {
+            $("#stateError").text("State is required");
+            isValid = false;
+        }
+
+
+        var city = $("#cityDropdown").val();
+        if (city.trim() === "") {
+            $("#cityError").text("City is required");
+            isValid = false;
+        }
+
+
+
+        return isValid;
+    }
+
+
+    function submitFromData() {
+
+        if (validateForm()) {
+            submitData()
+        }
+    }
+
+    $(document).ready(function () {
+
+        $("#clearButton").click(function () {
+
+        });
+    });
+
+
+
+
+</script>
+
+
+
+<script>
+    $(document).ready(function () {
+        $("#Email").on("input", function () {
+            var email = $(this).val();
+            var $errorElement = $("#Email-error");
+
+            if ($("#SendEmailCheckbox").is(":checked")) {
+                if (email.trim() === "") {
+                    $errorElement.text("Email is required");
+                } else if (!isValidEmail(email)) {
+                    $errorElement.text("Invalid email format");
+                } else {
+                    $errorElement.text("");
+                }
+            } else {
+                $errorElement.text("");
+            }
+        });
+
+        $("form").submit(function () {
+            var email = $("#Email").val();
+
+            if ($("#SendEmailCheckbox").is(":checked")) {
+                if (email.trim() === "") {
+                    $("#Email-error").text("Email is required");
+                    return false;
+                } else if (!isValidEmail(email)) {
+                    $("#Email-error").text("Invalid email format");
+                    return false;
+                }
+            }
+
+            return true;
+        });
+
+        function isValidEmail(email) {
+            var emailPattern = /^[a-zA-Z0-9._%+-]+[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+            return emailPattern.test(email);
+        }
+    });
+</script>
+
+
+
+
+<script>
+    $(document).ready(function () {
+
+        $('#SelectedState').on('change', function () {
+
+            var stateId = this.value;
+            var cityDropdown = $('#cityDropdown');
+            cityDropdown.empty();
+            cityDropdown.append($('<option>', {
+                value: '',
+                text: '---select city----'
+            }));
+
+            if (stateId) {
+                $.ajax({
+                    url: `/Employee/GetCitiesById?stateId=${stateId}`,
+                    method: 'GET',
+                    dataType: 'json',
+                    success: function (cities) {
+                        console.log(cities);
+                        cities.forEach(function (city) {
+                            cityDropdown.append($('<option>', {
+                                value: city.cityID,
+                                text: city.cityName
+                            }));
+                        });
+                    },
+                    error: function (xhr, status, error) {
+
+                        console.error(error);
+                    }
+                });
+            }
+        });
+    });
+
+
+</script>
+
+
+@section Scripts {
+    {
+        Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

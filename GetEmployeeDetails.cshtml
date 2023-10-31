@@ -1,0 +1,556 @@
+﻿@model WebMVC.Models.PagingData
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@10"></script>
+<script src="~/JavaScript.js"></script>
+
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+
+
+<head>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.11.5/css/jquery.dataTables.css">
+    <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.js"></script>
+
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    @*  <title>Delete Employee</title> *@
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style type="text/css">
+        .bs-example {
+            margin: 20px;
+        }
+    </style>
+
+
+
+
+</head>
+<body>
+
+
+
+    @if (TempData["ErrorMessages"] != null)
+    {
+        var errorMessages = TempData["ErrorMessages"] as List<string>;
+        if (errorMessages.Count > 0)
+        {
+            <div class="alert alert-danger">
+                <h3>Error Messages:</h3>
+                <ul>
+                    @foreach (var error in errorMessages)
+                    {
+                        <li>@error</li>
+                    }
+                </ul>
+            </div>
+        }
+    }
+
+    @if (TempData["DuplicateRecords"] != null)
+    {
+        var duplicateRecords = TempData["DuplicateRecords"] as List<string>;
+        if (duplicateRecords.Count > 0)
+        {
+            <div class="alert alert-warning">
+                <h4>Duplicate Records:</h4>
+                <ul>
+                    @foreach (var record in duplicateRecords)
+                    {
+                        <li>@record</li>
+                    }
+                </ul>
+            </div>
+        }
+    }
+
+
+
+
+
+
+
+
+    <h4>@TempData["Message"]</h4>
+
+    <h3>@TempData["Message"] </h3>
+
+    <div class="container">
+        @if (TempData.ContainsKey("SuccessMessage"))
+        {
+            <div class="alert alert-success">
+                @TempData["SuccessMessage"]
+            </div>
+        }
+
+        <form id="searchForm">
+            <div class="input-group" style="width: 400px; margin: 10px;">
+                <input type="search" class="form-control" placeholder="Search..." name="searchData" value="@Model.SearchTerm">
+                <div class="input-group-append">
+                    <button type="button" id="searchButton" class="btn btn-primary">Search</button>
+                    <button type="button" id="resetButton" class="btn btn-secondary">Reset</button>
+
+                </div>
+            </div>
+            <div class="form-group" style="margin-left: 10px;width:150px">
+                <label for="RecordsPerPage" style="font-weight: bold; ">Records Per Page:</label>
+                <select id="RecordsPerPageDropdown" name="RecordsPerPage" class="form-control">
+                    @for (int i = 3; i <= 15; i += 5)
+                    {
+                        <option id="RecordsPerPage" value="@i">@i</option>
+                    }
+                </select>
+            </div>
+        </form>
+        <form method="post" enctype="multipart/form-data">
+            <div class="form-group">
+                <label for="UploadedFile">Upload Excel File:</label>
+                <input type="file" name="UploadedFile1" class="form-control" accept=".xlsx , .csv , .xls" />
+            </div>
+            <button type="button" id="uploadButton" class="btn btn-primary">Upload</button>
+        </form>
+
+        <br>
+        @using (Html.BeginForm("Export", "Employee", FormMethod.Get, new { id = "exportForm" }))
+        {
+            <label for="xlsxRadio">XLSX</label>
+            <input type="radio" id="xlsxRadio" name="format" value="xlsx" checked="checked" />
+
+            <label for="csvRadio">CSV</label>
+            <input type="radio" id="csvRadio" name="format" value="csv" />
+            <button id="exportButton" class="btn btn-dark">Export to Excel</button>
+        }
+        <script>
+            $(document).ready(function () {
+                $("#exportButton").click(function (e) {
+                    e.preventDefault();
+
+
+                    var selectedFormat = $("input[name='format']:checked").val();
+
+
+                    $.ajax({
+                        type: "GET",
+                        url: $("#exportForm").attr("action"),
+                        data: { format: selectedFormat },
+                        success: function (data) {
+
+                            if (selectedFormat === "xlsx") {
+
+                                var blob = new Blob([data], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+                                var link = document.createElement('a');
+                                link.href = window.URL.createObjectURL(blob);
+                                link.download = 'export.xlsx';
+                                link.click();
+                            } else if (selectedFormat === "csv") {
+
+                                var blob = new Blob([data], { type: 'text/csv' });
+                                var link = document.createElement('a');
+                                link.href = window.URL.createObjectURL(blob);
+                                link.download = 'export.csv';
+                                link.click();
+                            }
+                        },
+                        error: function (error) {
+                            console.error("Error:", error);
+                        }
+                    });
+                });
+            });
+        </script>
+
+
+
+        <div id="resultContainer">
+
+        </div>
+
+        <br>
+
+
+
+        <div class="pagination">
+            @if (Model.TotalRecords > Model.RecordsPerPage)
+            {
+                if (Model.CurrentPage > 1)
+                {
+                    <button type="button" data-currentpage="@(Model.CurrentPage - 1)" data-recordsperpage="@(Model.RecordsPerPage)" class="btn btn-primary pagination">Previous</button>
+                }
+            }
+            @if (Model.TotalRecords > 0)
+            {
+                for (int i = 1; i <= Math.Ceiling((double)Model.TotalRecords / Model.RecordsPerPage); i++)
+                {
+                    if (Model.CurrentPage == i)
+                    {
+                        <span class="btn btn-primary active">@i</span>
+                    }
+                    else
+                    {
+                        <button type="button" data-currentpage="@i" data-recordsperpage="@(Model.RecordsPerPage)" class="btn btn-primary pagination">@i</button>
+                    }
+                }
+                if (Model.CurrentPage < Math.Ceiling((double)Model.TotalRecords / Model.RecordsPerPage))
+                {
+                    <button type="button" data-currentpage="@(Model.CurrentPage + 1)" data-recordsperpage="@(Model.RecordsPerPage)" class="btn btn-primary pagination">Next</button>
+                }
+            }
+        </div>
+
+        @if (TempData.ContainsKey("ErrorMessage"))
+        {
+            <div class="alert alert-danger">
+                @TempData["ErrorMessage"]
+            </div>
+        }
+
+
+
+
+
+        <br>
+
+        <div class="bs-example">
+            <table class="table table-bordered table-responsive" id="dataTable">
+                <thead>
+                    <tr>
+                        <th style="width: 5%;">Serial No</th>
+                        <th style="width: 10%;">First Name</th>
+                        <th style="width: 10%;">Last Name</th>
+                        <th style="width: 5%;">Gender</th>
+                        <th style="width: 10%;">DOB</th>
+                        <th style="width: 100%;">Hobbies</th>
+                        <th style="width: 10%;">State</th>
+                        <th style="width: 10%;">City</th>
+                        <th style="width: 10%;">Image</th>
+                        <th style="width: 10%;">Pdf</th>
+                        <th style="width: 5%;">Edit</th>
+                        <th style="width: 5%;">Delete</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var e in Model.Data)
+                    {
+                        <tr>
+                            <td>@e.SerialNo</td>
+                            <td id="Firstname">@e.Firstname</td>
+                            <td id="Lastname">@e.Lastname</td>
+                            <td id="Gender">@e.Gender</td>
+                            <td>@e.Dateofbirth</td>
+                            <td style="white-space: nowrap;">@e.Hobbies</td>
+                            <td id="stateTd">@e.State</td>
+                            <td id="cityTd">@e.City</td>
+
+
+
+                            <td>
+
+                                <a asp-action="DownloadFile" asp-controller="Employee" asp-route-fileName="@e.UploadImage" download>
+
+                                    <img src="@e.UploadImage" alt="Image" style="height:100px; width:100px">
+                                </a>
+                                <br>
+                                @* <span>@e.Firstname</span>
+                                    <br>
+                                    <span> @e.Id</span> *@
+                            </td>
+
+
+                            <td style="white-space: nowrap;">
+
+                                <a asp-action="DownloadFile" asp-controller="Employee" asp-route-fileName="@e.UploadPdf">@e.UploadPdf</a>
+                            </td>
+
+
+
+
+
+                            <td>
+                                <button type="button" data-id="e.Id" class="btn btn-primary editEmployeeData">Edit</button>
+                            </td>
+
+
+
+
+
+                            <td>
+                                <button type="button" data-toggle="modal" data-target="#confirmDeleteModal" data-id="e.Id" class="btn btn-danger delete-record1">Delete</button>
+                            </td>
+
+
+
+
+                        </tr>
+
+                    }
+                </tbody>
+
+            </table>
+
+
+
+            @if (Model.TotalRecords > 0)
+            {
+                int startRecord = (Model.CurrentPage - 1) * Model.RecordsPerPage + 1;
+                int endRecord = Model.CurrentPage * Model.RecordsPerPage;
+                endRecord = Math.Min(endRecord, Model.TotalRecords);
+
+                string recordText;
+
+                if (startRecord == endRecord && Model.TotalRecords == 1)
+                {
+                    recordText = "Record";
+                }
+                else
+                {
+                    recordText = "Records";
+                }
+
+                <p style="text-align: center;">@recordText @startRecord to @endRecord out of @Model.TotalRecords</p>
+            }
+
+
+
+        </div>
+    </div>
+
+
+    <script>
+        $(document).ready(function () {
+            $('.pagination').on('click', '.pagination', function () {
+                var currentPage = $(this).data('currentpage');
+                var recordsPerPage = $(this).data('recordsperpage');
+
+                function paginationData(currentPage, recordsPerPage) {
+                    $.ajax({
+                        url: '/Employee/Details',
+                        type: 'GET',
+                        data: { CurrentPage: currentPage, RecordsPerPage: recordsPerPage },
+                        success: function (data) {
+                            $('#partialViewDisplayEmployee').html(data);
+                        },
+                        error: function () {
+
+                        }
+                    });
+                }
+
+                paginationData(currentPage, recordsPerPage);
+            });
+        });
+
+    </script>
+
+
+
+
+</body>
+<script src="~/js/JavaScript.js"></script>
+
+
+
+<script>
+    $(document).ready(function () {
+
+        $('.delete-record').click(function () {
+            var recordId = $(this).data('id');
+
+            $('#confirmDeleteButton').attr('href', '/Employee/Delete/' + recordId);
+        });
+    });
+</script>
+
+
+
+
+</html>
+
+<script>
+    $(document).ready(function () {
+
+        $("#searchButton").click(function () {
+            search();
+        });
+
+
+
+
+        $("#searchForm input[name='searchData']").keypress(function (e) {
+            if (e.which === 13) {
+
+                search();
+                e.preventDefault();
+            }
+        });
+    });
+
+    function search() {
+
+        var searchData = $("#searchForm input[name='searchData']").val();
+
+        var recordsPerPage = $("#RecordsPerPageDropdown").val();
+
+
+        $.ajax({
+            url: '/Employee/Details',
+            type: 'GET',
+            data: {
+                searchData: searchData,
+                recordsPerPage: recordsPerPage
+            },
+            success: function (data) {
+                $('#resultContainer').html(data);
+
+                $('#partialViewDisplayEmployee').html(data);
+            },
+            error: function () {
+
+            }
+        });
+    }
+
+</script>
+
+<script>
+
+    var dropdown = document.getElementById('RecordsPerPageDropdown');
+    var applyButton = document.getElementById('#ApplyButton');
+
+
+    applyButton.addEventListener('click', function () {
+
+        var selectedValue = dropdown.value;
+
+
+        console.log('Selected Records Per Page: ' + selectedValue);
+    });
+</script>
+
+<script>
+    $(document).ready(function () {
+
+        $("#resetButton").click(function () {
+
+            $.ajax({
+                url: '/Employee/Details',
+                type: 'GET',
+                success: function (data) {
+                    $('#partialViewDisplayEmployee').html(data);
+
+                },
+                error: function (xhr, status, error) {
+
+                    console.error('Error:', error);
+                }
+            });
+        });
+    });
+</script>
+
+
+
+
+
+
+
+<script>
+
+    $(document).ready(function () {
+
+        $(".delete-record1").click(function () {
+            console.log("Delete button clicked!");
+
+            var recordId = $(this).data("id");
+
+
+            Swal.fire({
+                title: 'Confirm Delete',
+                text: 'Are you sure you want to delete this record?',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Delete',
+            }).then((result) => {
+                if (result.isConfirmed) {
+
+                    $.ajax({
+                        url: '/Employee/Delete/' + recordId,
+                        type: 'POST',
+                        success: function (data) {
+                            $('#partialViewDisplayEmployee').html(data);
+                            console.log("Delete success!");
+
+                            $("#confirmDeleteModal").modal("hide");
+
+                            $(this).closest("tr").remove();
+
+
+                            Swal.fire('Deleted!', 'The record has been deleted.', 'success');
+                        },
+                        error: function () {
+
+                            Swal.fire('Error', 'An error occurred while deleting the record.', 'error');
+                            console.log("Delete error!");
+                        }
+                    });
+                }
+            });
+        });
+    });
+
+
+</script>
+
+
+<script>
+    $("#uploadButton").on('click', function () {
+        debugger;
+        var formData = new FormData();
+        var fileInput = $("input[name='UploadedFile1']")[0].files[0];
+        formData.append("UploadedFile", fileInput);
+        $.ajax({
+            url: '@Url.Action("Upload", "Employee")',
+            type: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: function (data) {
+
+                $('#partialViewDisplayEmployee').html(data);
+
+            },
+            error: function (data) {
+
+                console.error("File upload error");
+            }
+        });
+    });
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
